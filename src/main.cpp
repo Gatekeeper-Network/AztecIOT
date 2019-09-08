@@ -5,6 +5,9 @@
 #include <string>
 #include <iostream> 
 #include <cstring> 
+#include <iostream> 
+#include <iomanip>
+
 #define RH_HAVE_SERIAL
 #define LED 9
 #define N_NODES 4
@@ -29,7 +32,6 @@ char buf[RH_MESH_MAX_MESSAGE_LEN];
 
 
 
-
 // int freeMem() {
 //   extern int __heap_start, *__brkval;
 //   int v;
@@ -43,6 +45,11 @@ void setup() {
   while (!Serial) ; // Wait for serial port to be available
 
   // nodeId = EEPROM.read(0);
+  std::string msg = "hello world"; 
+
+  strcpy(buf, msg.c_str()); 
+
+
 
 
   if (nodeId > 10) {
@@ -134,18 +141,7 @@ void updateRoutingTable() {
       else{
         routes[n-1] = route->next_hop; 
       }
-      // uint8_t v; 
-      //  v = route->next_hop ; 
-      // Serial.println((int)v); 
-      // std::string a(route->next_hop, 1);
-
-      
-      // Serial.println(a.c_str());  
-
      
-      // routes[n-1] = 0; 
-      
-    
     if (routes[n-1] == 0) {
         // if we have no route to the node, reset the received signal strength
         rssi[n-1] = 0;
@@ -155,10 +151,12 @@ void updateRoutingTable() {
 
 }
 
+int counter = 0; 
 // Create a JSON string with the routing info to each node
 void getRouteInfoString(char *p, size_t len) {
-  Serial.println("Inside getRoute"); 
+
   p[0] = '\0';
+ 
   strcat(p, "[");
   for(uint8_t n=1;n<=N_NODES;n++) {
     strcat(p, "{\"n\":");
@@ -166,12 +164,21 @@ void getRouteInfoString(char *p, size_t len) {
     strcat(p, ",");
     strcat(p, "\"r\":");
     sprintf(p+strlen(p), "%d", rssi[n-1]);
+
+
     strcat(p, "}");
     if (n<N_NODES) {
       strcat(p, ",");
     }
   }
-  strcat(p, "]");
+  strcat(p, ",");
+  strcat(p, "\"counter\":");
+  sprintf(p+strlen(p), "%i", counter); 
+
+  strcat(p, "abcdf0123456789abcdf0123456789abcdf0123456789abcdf0123456789abcdf0123456789abcdf01234");
+
+  counter++; 
+ 
 }
 
 void printNodeInfo(uint8_t node, char *s) {
@@ -194,21 +201,23 @@ void loop() {
 
 
     updateRoutingTable();
- 
-    
-    Serial.println("BUFCHAR");
- 
+  
       
     getRouteInfoString(buf, RH_MESH_MAX_MESSAGE_LEN);
-    Serial.println("Get RotingINFO String"); 
+
+
     Serial.print(F("->"));
     Serial.print(n);
     Serial.print(F(" :"));
+    
+
+    Serial.println("buffer being sent\n"); 
     Serial.println(buf);
 
 
     // send an acknowledged message to the target node
     uint8_t error = manager->sendtoWait((uint8_t *)buf, strlen(buf), n);
+
     if (error != RH_ROUTER_ERROR_NONE) {
       Serial.println();
       Serial.print(F(" ! "));
@@ -235,6 +244,24 @@ void loop() {
         Serial.print(from);
         Serial.print(F("->"));
         Serial.print(F(" :"));
+
+        Serial.println("recmsg:\n"); 
+
+       
+
+        Serial.println("recieved string"); 
+
+        Serial.println(buf); 
+         std::string msg(buf, sizeof(buf)); 
+
+        std::size_t pos = msg.find("counter"); 
+        std::string msgpart = msg.substr(pos + 9); 
+
+        Serial.println("Counter:\n");
+
+        Serial.println(msgpart.c_str()); 
+
+        //counter +3 before it gets back. 
    
         //todo: uncomment
         // if (nodeId == 1) printNodeInfo(from, buf.c_str()); // debugging
