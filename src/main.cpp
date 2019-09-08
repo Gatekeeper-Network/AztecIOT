@@ -22,9 +22,8 @@ RHMesh *manager;
 
 
 // message buffert
+char buf[RH_MESH_MAX_MESSAGE_LEN];
 
-using namespace std; 
-std::string buf;
 
 
 
@@ -191,19 +190,18 @@ void loop() {
  
     
     Serial.println("BUFCHAR");
-    char* bufchar = new char[buf.length()+1]; 
-    std::strcpy(bufchar, buf.c_str()); 
-    Serial.println(bufchar);  
-    getRouteInfoString(bufchar, RH_MESH_MAX_MESSAGE_LEN);
+ 
+      
+    getRouteInfoString(buf, RH_MESH_MAX_MESSAGE_LEN);
     Serial.println("Get RotingINFO String"); 
     Serial.print(F("->"));
     Serial.print(n);
     Serial.print(F(" :"));
-    Serial.println(bufchar);
+    Serial.println(buf);
 
 
     // send an acknowledged message to the target node
-    uint8_t error = manager->sendtoWait((uint8_t *)bufchar, strlen(bufchar), n);
+    uint8_t error = manager->sendtoWait((uint8_t *)buf, strlen(buf), n);
     if (error != RH_ROUTER_ERROR_NONE) {
       Serial.println();
       Serial.print(F(" ! "));
@@ -216,7 +214,7 @@ void loop() {
         rssi[route->next_hop-1] = rf95.lastRssi();
       }
     }
-    if (nodeId == 1) printNodeInfo(nodeId, bufchar); // debugging
+    // if (nodeId == 1) printNodeInfo(nodeId, bufchar); // debugging
 
     // listen for incoming messages. Wait a random amount of time before we transmit
     // again to the next node
@@ -225,12 +223,12 @@ void loop() {
       int waitTime = nextTransmit - millis();
       uint8_t len = sizeof(buf);
       uint8_t from;
-      if (manager->recvfromAckTimeout((uint8_t *)bufchar, &len, waitTime, &from)) {
+      if (manager->recvfromAckTimeout((uint8_t *)buf, &len, waitTime, &from)) {
         buf[len] = '\0'; // null terminate string
         Serial.print(from);
         Serial.print(F("->"));
         Serial.print(F(" :"));
-        Serial.println(bufchar);
+        Serial.println(buf);
         //todo: uncomment
         // if (nodeId == 1) printNodeInfo(from, buf.c_str()); // debugging
         // we received data from node 'from', but it may have actually come from an intermediate node
