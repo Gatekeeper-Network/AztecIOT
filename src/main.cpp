@@ -37,6 +37,7 @@ char buf[RH_MESH_MAX_MESSAGE_LEN];
 //   int v;
 //   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 // }
+  char newBuf[32]; 
 
 void setup() {
   randomSeed(analogRead(0));
@@ -44,10 +45,12 @@ void setup() {
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
 
-  // nodeId = EEPROM.read(0);
-  std::string msg = "hello world"; 
 
-  strcpy(buf, msg.c_str()); 
+
+ 
+
+
+
 
 
 
@@ -194,6 +197,16 @@ void printNodeInfo(uint8_t node, char *s) {
 
 void loop() {
   Serial.println("in loop");
+   while(!Serial.available()){
+    Serial.readBytesUntil('/r',newBuf,32); 
+  }
+
+  std::string msg(newBuf, sizeof(buf)); 
+
+  Serial.println("read from serial\n");
+  Serial.println(msg.c_str()); 
+
+
 
   for(uint8_t n=1;n<=N_NODES;n++) {
     if (n == nodeId) continue; // self
