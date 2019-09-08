@@ -9,9 +9,9 @@
 #define LED 9
 #define N_NODES 4
 
-static uint8_t nodeId = 2;
-static uint8_t routes[N_NODES]; // full routing table for mesh
-static int16_t rssi[N_NODES]; // signal strength info
+ uint8_t nodeId = 1;
+ uint8_t routes[N_NODES]; // full routing table for mesh
+ int16_t rssi[N_NODES]; // signal strength info
 
 // Singleton instance of the radio driver\
 //TTGO v1 CS/SS is 18 & IRQ is 26
@@ -43,7 +43,8 @@ void setup() {
   while (!Serial) ; // Wait for serial port to be available
 
   // nodeId = EEPROM.read(0);
-  int nodeId = 1; 
+
+
   if (nodeId > 10) {
     Serial.print(F("EEPROM nodeId invalid: "));
     Serial.println(nodeId);
@@ -117,16 +118,22 @@ void updateRoutingTable() {
   for(uint8_t n=1;n<=N_NODES;n++) {
     Serial.println("inside loop"); 
     RHRouter::RoutingTableEntry *route = manager->getRouteTo(n);
-    route->state; 
+
     Serial.println("routingTableset"); 
     if (n == nodeId) {
-      Serial.println("Nodeisself"); 
+      Serial.println("Node Is Self"); 
       routes[n-1] = 255; // self
     } 
     else {
       Serial.println("setnexthop"); 
+      if(route == NULL){
+        Serial.println("Route Null"); 
+        routes[n-1] = 0; 
+      }
 
-
+      else{
+        routes[n-1] = route->next_hop; 
+      }
       // uint8_t v; 
       //  v = route->next_hop ; 
       // Serial.println((int)v); 
@@ -135,8 +142,8 @@ void updateRoutingTable() {
       
       // Serial.println(a.c_str());  
 
-      // routes[n-1] = route->next_hop;
-      routes[n-1] = 0; 
+     
+      // routes[n-1] = 0; 
       
     
     if (routes[n-1] == 0) {
@@ -145,7 +152,7 @@ void updateRoutingTable() {
       }
     }
   }
-  Serial.println("outside routing loop"); 
+
 }
 
 // Create a JSON string with the routing info to each node
@@ -228,7 +235,7 @@ void loop() {
         Serial.print(from);
         Serial.print(F("->"));
         Serial.print(F(" :"));
-        Serial.println(buf);
+   
         //todo: uncomment
         // if (nodeId == 1) printNodeInfo(from, buf.c_str()); // debugging
         // we received data from node 'from', but it may have actually come from an intermediate node
